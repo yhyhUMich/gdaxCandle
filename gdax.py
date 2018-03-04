@@ -69,7 +69,7 @@ class GDAX(object):
 
     def request_slice(self, start, end, granularity):
         # Allow 3 retries (we might get rate limited).
-        retries = 3
+        retries = 5
         for retry_count in range(0, retries):
             # From https://docs.gdax.com/#get-historic-rates the response is in the format:
             # [[time, low, high, open, close, volume], ...]
@@ -84,7 +84,8 @@ class GDAX(object):
                     raise Exception('Failed to get exchange data for ({}, {})!'.format(start, end))
                 else:
                     # Exponential back-off.
-                    sleep(1.5 * retry_count)
+                    print("retry ", retry_count, "times")
+                    sleep(3 ** retry_count)
             else:
                 # Sort the historic rates (in ascending order) based on the timestamp.
                 result = sorted(response.json(), key=lambda x: x[0])
@@ -105,7 +106,7 @@ class GDAX(object):
 
         # We will fetch the candle data in windows of maximum 100 items.
         # GDAX has a limit of returning maximum of 200, per request.
-        delta = timedelta(minutes=granularity * 100)
+        delta = timedelta(minutes=granularity * 300)
 
         slice_start = start
         while slice_start != end:
@@ -152,7 +153,7 @@ class GDAX(object):
 
         # We will fetch the candle data in windows of maximum 100 items.
         # GDAX has a limit of returning maximum of 200, per request.
-        delta = timedelta(minutes=granularity * 100)
+        delta = timedelta(minutes=granularity * 300)
 
         slice_start = start
         while slice_start != end:
@@ -167,6 +168,8 @@ class GDAX(object):
         data_frame['time'] = data_frame['time'].apply(GDAX.__unix_to_utcdatetime)
         data_frame['time'] = data_frame['time'].apply(GDAX.__datetime_to_str)
 
-        newdf = data_frame[['time', 'open', 'high', 'low', 'close']]
+        data_frame['volume'] = data_frame['volume'].apply(lambda x: x * 1000)
+
+        newdf = data_frame[['time', 'open', 'high', 'low', 'close', 'volume', 'oi']]
 
         return newdf

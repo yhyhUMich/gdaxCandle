@@ -11,8 +11,8 @@ def cypto_candle(instrument, start, end, granularity):
 if __name__ == "__main__":
     granularity = 1
     market = 'GDAX'
-    start = datetime(2017, 1, 1)
-    end = datetime(2018, 2, 20)
+    start = datetime(2017, 4, 1)
+    end = datetime(2018, 2, 27)
 
     ltc_data = cypto_candle('LTC-USD', start, end, granularity)
     btc_data = cypto_candle('BTC-USD', start, end, granularity)
