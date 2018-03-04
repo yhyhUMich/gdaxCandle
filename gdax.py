@@ -53,8 +53,8 @@ class GDAX(object):
 
     @staticmethod
     def __datetime_to_str(dt):
-        return dt.strftime("%Y/%m/%d %H%M")
-    
+        return dt.strftime("%Y/%m/%d %H:%M")
+
     @staticmethod
     def __datetime_to_intdate(dt):
         return int(dt.strftime("%Y%m%d"))
@@ -62,7 +62,7 @@ class GDAX(object):
     @staticmethod
     def __datetime_to_inttime(dt):
         return int(dt.strftime("%H%M%S"))
-    
+
     @staticmethod
     def __float_to_int(num):
         return int(num * 10000)
@@ -70,7 +70,7 @@ class GDAX(object):
     def request_slice(self, start, end, granularity):
         # Allow 3 retries (we might get rate limited).
         retries = 3
-        for retry_count in xrange(0, retries):
+        for retry_count in range(0, retries):
             # From https://docs.gdax.com/#get-historic-rates the response is in the format:
             # [[time, low, high, open, close, volume], ...]
             response = requests.get(self.uri, {
@@ -114,17 +114,15 @@ class GDAX(object):
             data += self.request_slice(slice_start, slice_end, granularity)
             slice_start = slice_end
 
-
-        
         data_frame = pandas.DataFrame(data=data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
-        
+
         data_frame = data_frame.assign(settle=0, oi=0, turnover=0, total_volume=0, total_turnover=0,
-                                 date=0, trade_date=0, index=0, 
-                                 askprice1=0, askprice2=0, askprice3=0, askprice4=0, askprice5=0,
-                                 bidprice1=0, bidprice2=0, bidprice3=0, bidprice4=0, bidprice5=0,
-                                 askvolume1=0, askvolume2=0, askvolume3=0, askvolume4=0, askvolume5=0,
-                                 bidvolume1=0, bidvolume2=0, bidvolume3=0, bidvolume4=0, bidvolume5=0)
-        
+                                       date=0, trade_date=0, index=0,
+                                       askprice1=0, askprice2=0, askprice3=0, askprice4=0, askprice5=0,
+                                       bidprice1=0, bidprice2=0, bidprice3=0, bidprice4=0, bidprice5=0,
+                                       askvolume1=0, askvolume2=0, askvolume3=0, askvolume4=0, askvolume5=0,
+                                       bidvolume1=0, bidvolume2=0, bidvolume3=0, bidvolume4=0, bidvolume5=0)
+
         data_frame['low'] = data_frame['low'].apply(GDAX.__float_to_int)
         data_frame['high'] = data_frame['high'].apply(GDAX.__float_to_int)
         data_frame['open'] = data_frame['open'].apply(GDAX.__float_to_int)
@@ -135,7 +133,7 @@ class GDAX(object):
         data_frame['date'] = data_frame['index'].apply(GDAX.__datetime_to_intdate)
         data_frame['trade_date'] = data_frame['index'].apply(GDAX.__datetime_to_intdate)
 
-        #data_frame.set_index('index', inplace=True)
+        # data_frame.set_index('index', inplace=True)
 
         return data_frame
 
@@ -162,13 +160,13 @@ class GDAX(object):
             slice_end = min(slice_start + delta, end)
             data += self.request_slice(slice_start, slice_end, granularity)
             slice_start = slice_end
-        
-        data_frame = pandas.DataFrame(data=data, columns=['time', 'open', 'high', 'low', 'close', 'volume'])
+
+        data_frame = pandas.DataFrame(data=data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
         data_frame = data_frame.assign(oi=0)
 
         data_frame['time'] = data_frame['time'].apply(GDAX.__unix_to_utcdatetime)
         data_frame['time'] = data_frame['time'].apply(GDAX.__datetime_to_str)
-        
-        return data_frame
 
-        
+        newdf = data_frame[['time', 'open', 'high', 'low', 'close']]
+
+        return newdf
